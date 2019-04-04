@@ -1,3 +1,22 @@
 1.mybatis的日志级别？
   mybatis的SQL日志级别时debug级别的，在其他的模式下。
 2.mybatis的日志打印使用适配器模式，如何执行？
+  ReuserExecutor.java
+  @Override
+  public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
+    Configuration configuration = ms.getConfiguration();
+    StatementHandler handler = configuration.newStatementHandler(wrapper, ms, parameter, rowBounds, resultHandler, boundSql);
+    Statement stmt = prepareStatement(handler, ms.getStatementLog());
+    return handler.<E>query(stmt, resultHandler);
+  }
+  
+  BaseExecutor.java
+  protected Connection getConnection(Log statementLog) throws SQLException {
+    Connection connection = transaction.getConnection();
+    if (statementLog.isDebugEnabled()) {
+      //如果需要打印Connection的日志，返回一个ConnectionLogger(代理模式, AOP思想)
+      return ConnectionLogger.newInstance(connection, statementLog, queryStack);
+    } else {
+      return connection;
+    }
+  }
